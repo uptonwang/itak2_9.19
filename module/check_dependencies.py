@@ -11,6 +11,7 @@ import importlib
 import shutil
 from pathlib import Path
 import os
+import tarfile
 
 class DependencyChecker:
     """依赖检测器类"""
@@ -54,6 +55,9 @@ class DependencyChecker:
         
         # 定义关键文件路径（模块在module目录中，需要向上一级找到项目根目录）
         self.script_dir = Path(__file__).parent.parent.absolute()
+        self.db_dir = self.script_dir / "db"
+        self.db_archive = self.script_dir / "db.tar.gz"
+        
         self.required_files = {
             'interproscan.sh': self.script_dir / "db" / "interproscan" / "interproscan.sh",
             'self_build.hmm': self.script_dir / "db" / "self_build_hmm" / "self_build.hmm",
@@ -138,12 +142,66 @@ class DependencyChecker:
         
         return True, "预测功能依赖检查通过"
     
-    def run_full_check(self):
+    def ensure_db_extracted(self):
+        """
+        确保db文件夹已解压。如果db文件夹不存在但db.tar.gz存在，则自动解压。
+        
+        Returns:
+            bool: 如果db文件夹可用返回True，否则返回False
+        """
+        try:
+            # 如果db文件夹已存在，直接返回True
+            if self.db_dir.exists() and self.db_dir.is_dir():
+                return True
+            
+            # 如果db文件夹不存在，检查是否有压缩文件
+            if not self.db_archive.exists():
+                print(f"  [错误] db文件夹和压缩文件都不存在")
+                print(f"    缺失: {self.db_dir}")
+                print(f"    缺失: {self.db_archive}")
+                return False
+            
+            print(f"  [信息] 检测到db文件夹不存在，正在从 {self.db_archive} 解压...")
+            
+            # 解压db.tar.gz文件
+            with tarfile.open(self.db_archive, 'r:gz') as tar:
+                tar.extractall(path=self.script_dir)
+            
+            # 验证解压是否成功
+            if self.db_dir.exists() and self.db_dir.is_dir():
+                print(f"  [成功] db文件夹解压成功: {self.db_dir}")
+                
+                # 删除压缩文件
+                try:
+                    self.db_archive.unlink()
+                    print(f"  [信息] 已删除原始压缩文件: {self.db_archive}")
+                except Exception as e:
+                    print(f"  [警告] 删除压缩文件失败: {e}")
+                
+                return True
+            else:
+                print(f"  [错误] 解压后db文件夹仍不存在: {self.db_dir}")
+                return False
+                
+        except Exception as e:
+            print(f"  [错误] 解压db文件夹时出错: {e}")
+            return False
 
+    def run_full_check(self):
+        """运行完整的依赖检查"""
         print("开始检查iTAK 2.0依赖...")
         print("=" * 60)
         
         all_dependencies_met = True
+        
+        # 首先确保db文件夹已解压
+        print("\n检查数据库文件:")
+        if self.ensure_db_extracted():
+            print("  [成功] 数据库文件准备完成")
+        else:
+            print("  [错误] 数据库文件准备失败")
+            self.missing_dependencies.append("数据库文件")
+            all_dependencies_met = False
         
         # 检查必需的Python包
         print("\n检查必需Python包依赖:")
