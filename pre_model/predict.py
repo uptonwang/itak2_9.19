@@ -369,12 +369,16 @@ def load_model(model_path, device, max_length=1000):
     return model, max_length
 
 def main():
+    # 获取脚本所在目录的绝对路径
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    default_model_path = os.path.join(script_dir, 'model.pth')
+    
     parser = argparse.ArgumentParser(description='多尺度CNN模型蛋白质预测')
     parser.add_argument('--fasta', type=str, required=True,
                        help='输入FASTA文件路径')
     parser.add_argument('--model', type=str, 
-                        default='/data2/wl24/2itak/itak2.0/pre_model/model.pth',
-                        help='模型文件路径 (固定: /data2/wl24/2itak/itak2.0/pre_model/model.pth)')
+                        default=default_model_path,
+                        help=f'模型文件路径 (默认: {default_model_path})')
     parser.add_argument('--threshold', type=float, default=0.1,
                        help='TF预测阈值 (默认: 0.1, 即10%%)')
     parser.add_argument('--output', type=str, default=None,
