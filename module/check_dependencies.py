@@ -262,18 +262,6 @@ class DependencyChecker:
                     print("    安装Perl: https://www.perl.org/get.html")
                     print("    Ubuntu/Debian: sudo apt-get install perl")
                     print("    CentOS/RHEL: sudo yum install perl")
-        
-        # 文件缺失建议
-        files_missing = [dep.split(': ')[1] for dep in self.missing_dependencies if dep.startswith('文件')]
-        if files_missing:
-            print("\n  缺失文件:")
-            for file_path in files_missing:
-                if 'interproscan.sh' in file_path:
-                    print("    请下载并安装InterProScan: https://interproscan-docs.readthedocs.io/")
-                elif 'self_build.hmm' in file_path:
-                    print("    请确保HMM数据库文件存在于db/self_build_hmm/目录")
-                elif 'model.pth' in file_path:
-                    print("    请确保深度学习模型文件存在于pre_model/目录")
 
 def main():
     """主函数"""
